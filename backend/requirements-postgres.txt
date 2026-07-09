@@ -1,0 +1,5 @@
+# OPTIONAL: install only if you want PostgreSQL instead of SQLite.
+#
+#   pip install -r requirements.txt -r requirements-postgres.txt
+
+psycopg[binary]==3.2.3

@@ -1,0 +1,15 @@
+# Core runtime — installs cleanly on Python 3.12 (see docs/PREREQUISITES.md).
+# The TF-IDF semantic fallback works out of the box with just numpy + scikit-learn,
+# so the whole system runs fully offline with ONLY this file installed.
+
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+pydantic-settings==2.7.1
+SQLAlchemy==2.0.36
+alembic==1.14.0
+httpx==0.28.1
+
+# Semantic (offline) + numerical
+numpy==2.2.1
+scikit-learn==1.6.1

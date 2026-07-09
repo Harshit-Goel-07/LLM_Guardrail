@@ -1,0 +1,11 @@
+# OPTIONAL: upgrades the semantic layer from TF-IDF to dense MiniLM embeddings.
+# Install this ONLY if you want the higher-accuracy embedding backend AND have
+# internet for a one-time ~90MB model download (all-MiniLM-L6-v2).
+#
+#   pip install -r requirements.txt -r requirements-ml.txt
+#
+# torch is large (hundreds of MB). If it fails to install on your Python version,
+# the app automatically falls back to TF-IDF (requirements.txt) — nothing breaks.
+
+sentence-transformers==3.3.1
+torch==2.5.1
