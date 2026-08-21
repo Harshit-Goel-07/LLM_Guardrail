@@ -62,6 +62,7 @@ class DetectionEngine:
 
     def _load_or_build_vectors(self, corpus_texts: list[str]) -> np.ndarray:
         path = self.settings.vector_cache_path
+        expected_dim = self.embedder.encode(["probe"]).shape[1]
         if path.exists():
             try:
                 data = np.load(path, allow_pickle=False)
@@ -73,6 +74,7 @@ class DetectionEngine:
                     cached_hash == self._corpus_hash
                     and cached_backend == self.embedder.name
                     and cached_model == self._cache_model_tag()
+                    and vectors.shape[1] == expected_dim
                 ):
                     logger.info("Loaded corpus vectors from cache: %s", path)
                     return vectors
@@ -132,11 +134,19 @@ class DetectionEngine:
         ]
         effective_semantic = s_score if strong_matches else min(s_score, 40.0)
 
-        weighted = (
+        base_weighted = (
             self.settings.weight_heuristics * h_score
             + self.settings.weight_semantic * effective_semantic
         )
-        weighted = round(min(100.0, max(0.0, weighted)), 2)
+        # Defense-in-depth: if deterministic heuristics or strong semantic hits independently
+        # reach high confidence, do not suppress the verdict due to lack of cross-layer signal.
+        signal_floor = 0.0
+        if h_score >= self.settings.block_threshold:
+            signal_floor = max(signal_floor, h_score)
+        if strong_matches and s_score >= self.settings.block_threshold:
+            signal_floor = max(signal_floor, s_score)
+
+        weighted = round(min(100.0, max(0.0, max(base_weighted, signal_floor))), 2)
 
         decision = (
             Decision.BLOCK if weighted >= self.settings.block_threshold else Decision.ALLOW

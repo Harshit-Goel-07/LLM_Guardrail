@@ -1,0 +1,56 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - guardrail-var:/app/backend/var
+    environment:
+      GUARDRAIL_LLM_PROVIDER: mock
+      GUARDRAIL_EMBEDDING_BACKEND: tfidf
+      GUARDRAIL_DATABASE_URL: sqlite:////app/backend/var/guardrail.db
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  # Optional Postgres — run with: docker compose --profile postgres up
+  postgres:
+    profiles: ["postgres"]
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: guardrail
+      POSTGRES_PASSWORD: guardrail
+      POSTGRES_DB: guardrail
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U guardrail"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  guardrail-var:
+  pgdata:

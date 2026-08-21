@@ -1,4 +1,4 @@
-"""The guarded proxy endpoint.
+r"""The guarded proxy endpoint.
 
 Flow:  request -> detection engine -> [BLOCK -> 200 with verdict, no LLM call]
                                     \-> [ALLOW -> forward to LLM provider]
@@ -8,7 +8,7 @@ is the OWASP LLM01 mitigation.
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -57,7 +57,13 @@ def chat(
         )
         return ChatResponse(event_id=event.id, blocked=True, verdict=verdict)
 
-    chat_result = provider.complete(payload.prompt)
+    try:
+        chat_result = provider.complete(payload.prompt)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"LLM provider '{provider.name}' failed: {exc}",
+        ) from exc
     event = crud.record_event(
         session,
         prompt=payload.prompt,

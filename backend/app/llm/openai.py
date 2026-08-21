@@ -23,7 +23,7 @@ class OpenAIProvider(ChatProvider):
         self._api_key = settings.openai_api_key
         self._base_url = settings.openai_base_url.rstrip("/")
         self._model = settings.openai_model
-        self._timeout = 60.0
+        self._timeout = settings.llm_timeout_seconds
 
     def complete(self, prompt: str) -> ChatResult:
         url = f"{self._base_url}/chat/completions"

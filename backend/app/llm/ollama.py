@@ -18,7 +18,7 @@ class OllamaProvider(ChatProvider):
     def __init__(self, settings: Settings) -> None:
         self._base_url = settings.ollama_base_url.rstrip("/")
         self._model = settings.ollama_model
-        self._timeout = 60.0
+        self._timeout = settings.llm_timeout_seconds
 
     def complete(self, prompt: str) -> ChatResult:
         url = f"{self._base_url}/api/chat"

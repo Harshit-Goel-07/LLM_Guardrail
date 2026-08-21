@@ -1,6 +1,6 @@
 // Typed API client for the FastAPI guardrail backend.
-// Uses relative paths so the Vite dev proxy (see vite.config.ts) forwards to
-// http://localhost:8000 with no CORS or hard-coded host.
+// Local dev: Vite proxy forwards /api and /v1 to http://localhost:8000.
+// Production: set VITE_API_BASE_URL to the backend origin.
 
 export type Decision = "allow" | "block";
 
@@ -83,6 +83,24 @@ export interface ChatResponse {
   model: string | null;
 }
 
+export interface ServiceStatus {
+  status: string;
+  app: string;
+  environment: string;
+  llm_provider: string;
+  llm_model: string;
+  database: string;
+  embedding_backend: string;
+  corpus_entries: number;
+  block_threshold: number;
+}
+
+const BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+
+function url(path: string): string {
+  return `${BASE}${path}`;
+}
+
 async function j<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const text = await res.text().catch(() => res.statusText);
@@ -93,32 +111,49 @@ async function j<T>(res: Response): Promise<T> {
 
 export const api = {
   async health(): Promise<{ status: string; app: string }> {
-    return j(await fetch("/health"));
+    return j(await fetch(url("/health")));
+  },
+  async status(): Promise<ServiceStatus> {
+    return j(await fetch(url("/v1/status")));
   },
   async chat(prompt: string, clientId = "dashboard"): Promise<ChatResponse> {
     return j(
-      await fetch("/v1/chat", {
+      await fetch(url("/v1/chat"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt, client_id: clientId }),
       })
     );
   },
-  async events(params: { limit?: number; decision?: Decision } = {}): Promise<GuardEvent[]> {
+  async analyze(prompt: string, clientId = "dashboard"): Promise<Verdict> {
+    return j(
+      await fetch(url("/v1/analyze"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, client_id: clientId }),
+      })
+    );
+  },
+  async events(params: {
+    limit?: number;
+    offset?: number;
+    decision?: Decision;
+  } = {}): Promise<GuardEvent[]> {
     const q = new URLSearchParams();
     q.set("limit", String(params.limit ?? 100));
+    q.set("offset", String(params.offset ?? 0));
     if (params.decision) q.set("decision", params.decision);
-    return j(await fetch(`/api/events?${q.toString()}`));
+    return j(await fetch(url(`/api/events?${q.toString()}`)));
   },
-  async stats(): Promise<Stats> {
-    return j(await fetch("/api/stats"));
+  async stats(windowHours = 24): Promise<Stats> {
+    return j(await fetch(url(`/api/stats?window_hours=${windowHours}`)));
   },
   async flag(
     id: number,
     body: { false_positive?: boolean; false_negative?: boolean }
   ): Promise<GuardEvent> {
     return j(
-      await fetch(`/api/events/${id}/flag`, {
+      await fetch(url(`/api/events/${id}/flag`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),

@@ -68,14 +68,36 @@ def create_app() -> FastAPI:
     )
 
     # Routers imported here (after app_state is defined) to avoid circular imports.
-    from .api import routes_events, routes_proxy
+    from .api import routes_agent, routes_events, routes_proxy
 
     app.include_router(routes_proxy.router)
+    app.include_router(routes_agent.router)
     app.include_router(routes_events.router)
 
     @app.get("/health", tags=["meta"])
     def health() -> dict:
         return {"status": "ok", "app": settings.app_name}
+
+    @app.get("/v1/status", tags=["meta"])
+    def status() -> dict:
+        """Runtime config snapshot — shows which integrations are active."""
+        eng = get_engine()
+        db_kind = "postgres" if settings.database_url.startswith("postgresql") else "sqlite"
+        return {
+            "status": "ok",
+            "app": settings.app_name,
+            "environment": settings.environment,
+            "llm_provider": settings.llm_provider,
+            "llm_model": settings.openai_model
+            if settings.llm_provider == "openai"
+            else settings.ollama_model
+            if settings.llm_provider == "ollama"
+            else "mock",
+            "database": db_kind,
+            "embedding_backend": eng.embedder.name,
+            "corpus_entries": len(eng.corpus),
+            "block_threshold": settings.block_threshold,
+        }
 
     return app
 

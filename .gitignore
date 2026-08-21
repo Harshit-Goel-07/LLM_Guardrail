@@ -18,12 +18,22 @@ backend/var/
 # Environment / secrets
 .env
 *.env
+!.env.example
 !*.env.example
 
 # Node / frontend
 node_modules/
 frontend/dist/
 frontend/.vite/
+*.tsbuildinfo
+frontend/vite.config.d.ts
+frontend/vite.config.js
+
+# Debug & Log files
+*.log
+debug*.txt
+*_debug.txt
+startup_log.txt
 
 # Editor / OS
 .vscode/

@@ -21,6 +21,11 @@ export function EventsTable({ events, filter, onFilterChange, onChanged }: Props
     onChanged();
   }
 
+  async function flagFN(ev: GuardEvent) {
+    await api.flag(ev.id, { false_negative: !ev.flagged_false_negative });
+    onChanged();
+  }
+
   const filters: (Decision | "all")[] = ["all", "block", "allow"];
 
   return (
@@ -89,6 +94,9 @@ export function EventsTable({ events, filter, onFilterChange, onChanged }: Props
                           {ev.flagged_false_positive ? (
                             <Badge variant="outline">FP</Badge>
                           ) : null}
+                          {ev.flagged_false_negative ? (
+                            <Badge variant="outline">FN</Badge>
+                          ) : null}
                         </div>
                       </td>
                       <td className="px-4 py-2">
@@ -103,7 +111,7 @@ export function EventsTable({ events, filter, onFilterChange, onChanged }: Props
                     {expanded === ev.id ? (
                       <tr className="border-b border-border/50 bg-background/40">
                         <td colSpan={6} className="px-4 py-3">
-                          <EventDetail ev={ev} onFlagFP={() => flagFP(ev)} />
+                          <EventDetail ev={ev} onFlagFP={() => flagFP(ev)} onFlagFN={() => flagFN(ev)} />
                         </td>
                       </tr>
                     ) : null}
@@ -118,7 +126,15 @@ export function EventsTable({ events, filter, onFilterChange, onChanged }: Props
   );
 }
 
-function EventDetail({ ev, onFlagFP }: { ev: GuardEvent; onFlagFP: () => void }) {
+function EventDetail({
+  ev,
+  onFlagFP,
+  onFlagFN,
+}: {
+  ev: GuardEvent;
+  onFlagFP: () => void;
+  onFlagFN: () => void;
+}) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       <div className="space-y-2">
@@ -177,10 +193,16 @@ function EventDetail({ ev, onFlagFP }: { ev: GuardEvent; onFlagFP: () => void })
           </div>
         )}
 
-        <Button size="sm" variant="outline" onClick={onFlagFP}>
-          <Flag className="h-3.5 w-3.5" />
-          {ev.flagged_false_positive ? "Unflag false positive" : "Mark false positive"}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={onFlagFP}>
+            <Flag className="h-3.5 w-3.5" />
+            {ev.flagged_false_positive ? "Unflag false positive" : "Mark false positive"}
+          </Button>
+          <Button size="sm" variant="outline" onClick={onFlagFN}>
+            <Flag className="h-3.5 w-3.5" />
+            {ev.flagged_false_negative ? "Unflag false negative" : "Mark false negative"}
+          </Button>
+        </div>
       </div>
     </div>
   );

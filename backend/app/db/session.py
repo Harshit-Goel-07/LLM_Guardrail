@@ -29,8 +29,10 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False
 
 
 def init_db() -> None:
-    """Create tables if they do not exist (demo convenience)."""
-    Base.metadata.create_all(bind=engine)
+    """Apply Alembic migrations (falls back to create_all on first run)."""
+    from .migrate import run_migrations
+
+    run_migrations(engine)
 
 
 def get_session() -> Iterator[Session]:

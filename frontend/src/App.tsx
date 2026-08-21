@@ -4,32 +4,38 @@ import { Charts } from "@/components/Charts";
 import { EventsTable } from "@/components/EventsTable";
 import { Playground } from "@/components/Playground";
 import { Badge } from "@/components/ui/badge";
-import { api, type Decision, type GuardEvent, type Stats } from "@/lib/api";
+import { api, type Decision, type GuardEvent, type ServiceStatus, type Stats } from "@/lib/api";
 import { ShieldCheck, RefreshCw } from "lucide-react";
+
+const WINDOW_OPTIONS = [1, 6, 24, 72, 168];
 
 export default function App() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [events, setEvents] = useState<GuardEvent[]>([]);
+  const [status, setStatus] = useState<ServiceStatus | null>(null);
   const [filter, setFilter] = useState<Decision | "all">("all");
+  const [windowHours, setWindowHours] = useState(24);
   const [online, setOnline] = useState<boolean | null>(null);
 
   const refresh = useCallback(async () => {
     try {
-      const [s, e] = await Promise.all([
-        api.stats(),
+      const [s, e, st] = await Promise.all([
+        api.stats(windowHours),
         api.events({ limit: 200, decision: filter === "all" ? undefined : filter }),
+        api.status(),
       ]);
       setStats(s);
       setEvents(e);
+      setStatus(st);
       setOnline(true);
     } catch {
       setOnline(false);
     }
-  }, [filter]);
+  }, [filter, windowHours]);
 
   useEffect(() => {
     refresh();
-    const id = setInterval(refresh, 5000); // live polling
+    const id = setInterval(refresh, 5000);
     return () => clearInterval(id);
   }, [refresh]);
 
@@ -48,9 +54,25 @@ export default function App() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {status ? (
+            <Badge variant="outline">
+              {status.llm_provider}/{status.embedding_backend} · {status.database}
+            </Badge>
+          ) : null}
           <Badge variant={online ? "success" : online === false ? "destructive" : "outline"}>
             {online ? "backend online" : online === false ? "backend offline" : "connecting…"}
           </Badge>
+          <select
+            value={windowHours}
+            onChange={(e) => setWindowHours(Number(e.target.value))}
+            className="rounded-md border border-border bg-background px-2 py-1 text-xs text-muted-foreground"
+          >
+            {WINDOW_OPTIONS.map((h) => (
+              <option key={h} value={h}>
+                stats: {h}h
+              </option>
+            ))}
+          </select>
           <button
             onClick={refresh}
             className="flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
@@ -73,11 +95,8 @@ export default function App() {
       </div>
 
       <footer className="mt-10 border-t border-border pt-4 text-center text-xs text-muted-foreground">
-        Detection backend:{" "}
-        <span className="text-primary">
-          {stats ? "live" : "—"}
-        </span>{" "}
-        · Data auto-refreshes every 5s
+        LLM: {status?.llm_provider ?? "—"} · Embeddings: {status?.embedding_backend ?? "—"} ·
+        Corpus: {status?.corpus_entries ?? "—"} entries · Data auto-refreshes every 5s
       </footer>
     </div>
   );

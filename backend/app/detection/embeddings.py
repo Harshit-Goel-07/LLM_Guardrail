@@ -65,9 +65,11 @@ class TfidfEmbedder:
         self.name = "tfidf"
         self._vectorizer = TfidfVectorizer(
             lowercase=True,
-            ngram_range=(1, 2),
+            ngram_range=(1, 3),
             min_df=1,
-            stop_words="english",
+            sublinear_tf=True,
+            strip_accents="unicode",
+            token_pattern=r"(?u)\b\w+\b",
         )
         # Fit on the corpus so the vocabulary reflects known-attack language.
         self._vectorizer.fit(list(corpus_texts))
