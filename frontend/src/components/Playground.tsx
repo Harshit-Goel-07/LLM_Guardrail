@@ -105,7 +105,7 @@ export function Playground({ onSent }: { onSent: () => void }) {
 
         {error ? (
           <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-            {error} — is the backend running on port 8000?
+            {error} — please check that the backend server is running.
           </div>
         ) : null}
 

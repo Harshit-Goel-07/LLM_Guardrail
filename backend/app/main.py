@@ -74,6 +74,11 @@ def create_app() -> FastAPI:
     app.include_router(routes_agent.router)
     app.include_router(routes_events.router)
 
+    @app.get("/", tags=["meta"])
+    def root():
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url="/docs")
+
     @app.get("/health", tags=["meta"])
     def health() -> dict:
         return {"status": "ok", "app": settings.app_name}
