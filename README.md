@@ -193,27 +193,6 @@ POST /v1/chat
 
 ---
 
-## Design decisions (defensible in interview)
-
-1. **SQLite default, Postgres-ready**
-   - SQLite is the correct simplicity/performance trade-off for a single-node demo.
-   - SQLAlchemy + Alembic preserve a direct migration path to Postgres.
-
-2. **Layered detection, not single-model dependence**
-   - Regex is cheap and precise for known attack signatures.
-   - Semantic similarity catches paraphrases and indirect phrasing.
-   - Combined score improves robustness and explainability.
-
-3. **Mock-first provider strategy**
-   - Guarantees zero-friction demo under restricted environments.
-   - Still demonstrates real-world integration through provider adapters.
-
-4. **Graceful degradation**
-   - If MiniLM is unavailable, TF-IDF fallback keeps service operational.
-   - Reliability is prioritized over brittle “only works on my machine” setups.
-
----
-
 ## Stretch goals
 
 - Rate limiting and anomaly detection for repeated probing/exfil attempts
