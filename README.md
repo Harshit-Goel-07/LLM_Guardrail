@@ -8,7 +8,7 @@ Built for a strong interview narrative around **OWASP LLM Top 10 (LLM01)**.
 
 ---
 
-## Why this project (interview framing)
+## Why this project 
 
 - **Current security problem**: LLM prompt injection and jailbreak attempts are a
   real production risk, especially when models are connected to tools/data.
